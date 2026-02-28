@@ -1,0 +1,1079 @@
+{
+  "name": "Gmail Inbox Manager & Classifier",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2448,
+        208
+      ],
+      "id": "fd39ccf5-98c3-4a3c-a628-3b7a8aef7836",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "35wRouDFB8J3EKrJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -2240,
+        416
+      ],
+      "id": "b15cb134-c921-4804-a518-455308305054",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Gp146aPBBpfY1I1G",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c144ecb1-6b4a-40f2-85ef-858be919ae07",
+              "leftValue": "={{ $json.output.senderName }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1856,
+        208
+      ],
+      "id": "653ea962-71be-4613-a92d-db62d19f1a8d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "17c78a79-67a6-421a-b009-29dbd16844d5",
+              "name": "intro",
+              "value": "=Dear {{ $json.output.senderName }},",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1536,
+        64
+      ],
+      "id": "b685818a-5cc3-49b5-a905-293ff6559230",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "455417c3-0694-47a0-99b4-7aaf76e7e6a4",
+              "name": "intro",
+              "value": "Hi, ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1536,
+        352
+      ],
+      "id": "46da5cc6-6853-4c99-92a7-2bfa4da54049",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "senderName",
+              "description": "Extract the sender's name from this email. If no name , return an empty string.",
+              "required": true
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "You are an advanced extraction tool. Only pull out the relevant details from the text. If you're unsure about the value of any requested attribute, leave it as an empty string."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1,
+      "position": [
+        -2224,
+        208
+      ],
+      "id": "207711ea-fe9a-45d0-a9d8-58fcbd08774b",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "intro",
+        "joinMode": "keepNonMatches",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -1168,
+        192
+      ],
+      "id": "026e6304-8f1c-4ac1-94df-b178fea5eaff",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b3e26d0b-6136-413a-b6d5-af2ea75aaaca",
+              "name": "message_id",
+              "value": "={{ $('Gmail Trigger').item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "7b33486f-7455-4ea7-b4ca-fe9331bf54ea",
+              "name": "intro",
+              "value": "={{ $json.intro }}",
+              "type": "string"
+            },
+            {
+              "id": "540f6707-d57e-487b-811c-e1ed5b1fd6e5",
+              "name": "threadId",
+              "value": "={{ $('Gmail Trigger').item.json.threadId }}",
+              "type": "string"
+            },
+            {
+              "id": "500fb0d7-544e-4ce9-ba58-e87773e1ddc6",
+              "name": "text",
+              "value": "={{ $('Gmail Trigger').item.json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -896,
+        192
+      ],
+      "id": "eb036d34-ba6b-4a62-a9bf-a8757b1b69e4",
+      "name": "Clean Data"
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Services requests",
+              "description": "Questions about consulting services offered, rates, or availability."
+            },
+            {
+              "category": "Consultation requests",
+              "description": "Scheduling initial consultations or follow-up meetings."
+            },
+            {
+              "category": "Payments",
+              "description": "Questions about invoices, payments, or refunds"
+            },
+            {
+              "category": "Others",
+              "description": "Emails that don’t clearly fit into the other categories."
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "Please classify the text provided by the user into one of the following categories: {categories}, and use the provided formatting instructions below. Don't explain, and only output the json."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        192
+      ],
+      "id": "1972d761-a2f1-4016-a676-b023b384366f",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -624,
+        464
+      ],
+      "id": "f0cc29aa-a2e5-45d1-bb41-51ba32c93e94",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "Gp146aPBBpfY1I1G",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_2788331662442355018"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "042693fb-c203-494e-8961-9a57097c793c",
+      "name": "Services Request",
+      "webhookId": "a96a31d4-4aee-4401-92c7-1496491ea923",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "35wRouDFB8J3EKrJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.message_id }}",
+        "labelIds": [
+          "Label_553773287606623809"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        208
+      ],
+      "id": "04fb68c6-5ae8-4d79-be86-f153cbb9765d",
+      "name": "Consultation Requests",
+      "webhookId": "f8de955e-79ca-4534-a146-fa288d53e9c3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "35wRouDFB8J3EKrJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.message_id }}",
+        "labelIds": [
+          "Label_5059364858265991704"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        400
+      ],
+      "id": "51e35bfe-1012-49e0-a046-3e0f6e70b4e2",
+      "name": "Payments",
+      "webhookId": "dd72b9a7-7d14-472b-8d86-f7e1a9a0cd6e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "35wRouDFB8J3EKrJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.message_id }}",
+        "labelIds": [
+          "Label_1094421111098861145"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        608
+      ],
+      "id": "70f7350c-03b5-4e5c-83de-681e94280a0c",
+      "name": "Others",
+      "webhookId": "ba168146-c21b-46e1-b11d-85e17bbe8639",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "35wRouDFB8J3EKrJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $json.id }}",
+        "emailType": "text",
+        "message": "=Thank you for reaching out to Adaptify AI! We’re excited to learn about your needs and how we can assist you.\n\nYour inquiry has been received, and a member of our team is reviewing the details. We’ll get back to you within 24 hours with more information.\n\nIn the meantime, feel free to explore our website for additional details about our services and contact with us via What\n\nWe look forward to connecting with you!\n\nBest regards,\nRushikesh Thakare",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        256,
+        0
+      ],
+      "id": "85d18c72-e837-4294-a11d-f89d8337812b",
+      "name": "Reply to services requests",
+      "webhookId": "5471569b-1d0a-4fb6-ad09-014516b6be94",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "35wRouDFB8J3EKrJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $json.id }}",
+        "emailType": "text",
+        "message": "=Thank you for reaching out to Adaptify AI. We’re excited to learn more about your needs and discuss how we can help.\n\nTo schedule your consultation, please reply to this email with your preferred date and time or use our online booking link here\n\nOnce we receive your preferred time, we’ll confirm the appointment or suggest alternative options if needed.\n\nIf you have any specific topics you’d like to discuss during the consultation, feel free to include them in your reply.\n\nWe look forward to connecting with you!\n\nBest regards,\nRushikesh thakare",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        224,
+        208
+      ],
+      "id": "912fb4fc-95de-45e2-830f-527ec84bac2c",
+      "name": "Reply to consultation requests",
+      "webhookId": "413b9fcc-30ef-43fb-ae4f-125189ccfb4b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "35wRouDFB8J3EKrJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $json.id }}",
+        "emailType": "text",
+        "message": "=\nThank you for contacting us regarding your payment/billing inquiry. We’ve received your message and are working to address your request.\n\nA member of our team will get back to you within 2 working days to provide the necessary information or assistance.\n\nIf this matter is urgent, please call us directly at +44756248xxx.\n\nThank you for your patience and for choosing Adaptify AI.\n\nBest regards,\nRushikesh Thakare",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        224,
+        400
+      ],
+      "id": "4416dbf3-3093-48af-83cd-18c05aaba0be",
+      "name": "Reply to payment-related questions",
+      "webhookId": "a0fda489-eb42-4d02-9157-4d9deaa521e1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "35wRouDFB8J3EKrJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyHour",
+              "minute": 20
+            }
+          ]
+        }
+      },
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.cron",
+      "position": [
+        -3120,
+        1552
+      ],
+      "id": "474829ff-205a-4bcc-bf22-78a611450c1a",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1zAv2yNl8ikRpZfHre0BMIM_95rQJbnGfS29GbX1tlw0",
+          "mode": "list",
+          "cachedResultName": "social media posts automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zAv2yNl8ikRpZfHre0BMIM_95rQJbnGfS29GbX1tlw0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zAv2yNl8ikRpZfHre0BMIM_95rQJbnGfS29GbX1tlw0/edit#gid=0"
+        },
+        "options": {}
+      },
+      "name": "Read Posts",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -2912,
+        1552
+      ],
+      "id": "02212569-9eae-4ec3-8af3-7ef2afcfb9c0",
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KTbH07ZzUvsfICvQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "df52da24-4604-4770-9595-d6e7f13882d9",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "aprove",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -2720,
+        1552
+      ],
+      "id": "3afe3fae-3232-448c-8c0a-576673d62b51",
+      "typeVersion": 2.3
+    },
+    {
+      "parameters": {
+        "functionCode": "// time + platform normalization\nconst platforms = $json.platforms.split(',').map(p => p.trim());\nreturn [{\n  ...$json,\n  platforms\n}];"
+      },
+      "name": "Normalize Data",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        -2512,
+        1552
+      ],
+      "id": "1abcbafb-19b1-496d-ae3c-bcffa59f94f0",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "options": {},
+        "requestOptions": {}
+      },
+      "name": "AI Orchestrator",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        -2320,
+        1552
+      ],
+      "id": "7dcfddc6-94ad-4537-9a76-662861ae6702",
+      "typeVersion": 1.1,
+      "credentials": {
+        "openAiApi": {
+          "id": "Gp146aPBBpfY1I1G",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {},
+        "requestOptions": {}
+      },
+      "name": "AI Copywriting Agent",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        -2112,
+        1440
+      ],
+      "id": "26df374b-481d-45d1-8bc1-ca9803305d86",
+      "typeVersion": 1.1,
+      "credentials": {
+        "openAiApi": {
+          "id": "Gp146aPBBpfY1I1G",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {},
+        "requestOptions": {}
+      },
+      "name": "AI Image Prompt Agent",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        -2112,
+        1648
+      ],
+      "id": "045cda11-0f07-4f24-a350-335dbf183f0b",
+      "typeVersion": 1.1,
+      "credentials": {
+        "openAiApi": {
+          "id": "Gp146aPBBpfY1I1G",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "prompt": "={{$json.prompt}}",
+        "options": {},
+        "requestOptions": {}
+      },
+      "name": "AI Image Generator",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        -1920,
+        1648
+      ],
+      "id": "9955fdd9-8c3c-4e3f-86b2-96f8b95444c1",
+      "typeVersion": 1.1,
+      "credentials": {
+        "openAiApi": {
+          "id": "Gp146aPBBpfY1I1G",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {},
+        "requestOptions": {}
+      },
+      "name": "AI QA Agent",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        -1712,
+        1552
+      ],
+      "id": "acec731e-3bc3-4731-a6c4-fad3ce47e564",
+      "typeVersion": 1.1,
+      "credentials": {
+        "openAiApi": {
+          "id": "Gp146aPBBpfY1I1G",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.approved}}",
+              "operation": "isTrue"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "QA Approved?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -1520,
+        1552
+      ],
+      "id": "8d2ffe08-c211-48cc-9c6a-c79651a75baa",
+      "typeVersion": 2.3
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/IG_USER_ID/media",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "name": "Post to Instagram",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -1312,
+        1392
+      ],
+      "id": "8c90a05e-2fbb-4729-9a16-0828dfdb49c7",
+      "typeVersion": 4.3
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/PAGE_ID/feed",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "name": "Post to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -1312,
+        1552
+      ],
+      "id": "0d5cba97-1c38-4b3d-949d-c3212e9ad702",
+      "typeVersion": 4.3
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/v2/ugcPosts",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "name": "Post to LinkedIn",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -1312,
+        1712
+      ],
+      "id": "59571c82-ff0f-4c09-a86e-aa36d90b07d1",
+      "typeVersion": 4.3
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "name": "Update Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -1120,
+        1552
+      ],
+      "id": "46ce46d3-13c3-4ddd-9282-6288732d4dc2",
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KTbH07ZzUvsfICvQ",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Clean Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Data": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Services Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Consultation Requests",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Payments",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Others",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Services Request": {
+      "main": [
+        [
+          {
+            "node": "Reply to services requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultation Requests": {
+      "main": [
+        [
+          {
+            "node": "Reply to consultation requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payments": {
+      "main": [
+        [
+          {
+            "node": "Reply to payment-related questions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Posts": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Normalize Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Data": {
+      "main": [
+        [
+          {
+            "node": "AI Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "AI Copywriting Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Image Prompt Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Image Prompt Agent": {
+      "main": [
+        [
+          {
+            "node": "AI Image Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Image Generator": {
+      "main": [
+        [
+          {
+            "node": "AI QA Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI QA Agent": {
+      "main": [
+        [
+          {
+            "node": "QA Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA Approved?": {
+      "main": [
+        [
+          {
+            "node": "Post to Instagram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Post to Facebook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Post to LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Instagram": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Facebook": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "d053d01d-2dfa-4e72-bfc1-70f988944a71",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c9b4202ce7afdbc88fefd5a574d4f598c10373e4d69f5c37a5178bcd7f92e5a6"
+  },
+  "id": "I-V2ph_4gBjw7nE3Swse5",
+  "tags": []
+}
